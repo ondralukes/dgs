@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:solana/solana.dart' as sol;
@@ -38,10 +39,13 @@ class IdentityStorage{
   final sol.Ed25519HDKeyPair _funder;
   final sol.RPCClient _rpc;
   final String _programId;
+  final HashMap<int, String> _map = HashMap();
 
   String get address => _keyPair.address;
-  static Future<IdentityStorage> createNew(sol.RPCClient rpc, String programId, sol.Ed25519HDKeyPair funder) async {
-    var keyPair = await sol.Ed25519HDKeyPair.random();
+  static IdentityStorage loadExisting(sol.RPCClient rpc, String programId, sol.Ed25519HDKeyPair funder, sol.Ed25519HDKeyPair keyPair){
+    return IdentityStorage(rpc, programId, keyPair, funder);
+  }
+  static Future<IdentityStorage> createNew(sol.RPCClient rpc, String programId, sol.Ed25519HDKeyPair funder, sol.Ed25519HDKeyPair keyPair) async {
     var rent = await rpc.getMinimumBalanceForRentExemption(8192);
     var createIns = sol.Instruction(
         programId: sol.SystemProgram.programId,
@@ -76,17 +80,19 @@ class IdentityStorage{
     return data;
   }
 
-  Future<void> add(String name) async {
+  Future<int> add(String name) async {
     var bytes = utf8.encode(name);
     var chain = List<String>.empty();
     var append;
     var idx = -1;
+    var uid = 0;
     for(var i = 0;i<256;i++){
       var stat = await _findFreeSubchainSpace(i, bytes.length);
       if(stat.status != SubchainFreeStatus.Full){
         append = stat.status == SubchainFreeStatus.RequiresAppend;
         chain = stat.addresses;
         idx = i;
+        uid = i*256+stat.id;
         break;
       }
     }
@@ -125,9 +131,10 @@ class IdentityStorage{
       instructions: instructions
     ), signers, commitment: sol.Commitment.finalized);
     await _rpc.waitForSignatureStatus(txsig, sol.Commitment.finalized);
+    return uid;
   }
 
-  Future<void> list() async {
+  Future<void> sync() async {
     var main = await _getAccountDataFromString(_keyPair.address);
     if(main.isEmpty){
       throw 'Indentity block not found.';
@@ -150,7 +157,9 @@ class IdentityStorage{
           j++;
         }
         var name = utf8.decode(cur.getRange(nameStart, j).toList());
-        print('#$i/$id: $name');
+        var uid = i*256+id;
+        print('#$uid ($i/$id): $name');
+        _map[uid] = name;
         j++;
         while(cur[j] == 0 && j < 2016){
           j++;
@@ -165,6 +174,10 @@ class IdentityStorage{
     }
   }
 
+  String? find(int uid){
+    return _map[uid];
+  }
+
   Future<SubchainFreeSpace> _findFreeSubchainSpace(int idx, int nameLen) async {
     var main = await _getAccountDataFromString(_keyPair.address);
     if(main.isEmpty){
@@ -175,7 +188,7 @@ class IdentityStorage{
     var maxFree = 0;
     var cur = await _getAccountDataFromBytes(main.getRange(idx*32, idx*32+32));
     if(cur.isEmpty) {
-      return SubchainFreeSpace(addresses, SubchainFreeStatus.RequiresAppend);
+      return SubchainFreeSpace(addresses, SubchainFreeStatus.RequiresAppend, 0);
     }
     addresses.add(encodeAddress(main.getRange(idx*32, idx*32+32)));
     var i = 0;
@@ -210,9 +223,9 @@ class IdentityStorage{
         break;
       }
     }
-    if(id == -1) return SubchainFreeSpace(addresses, SubchainFreeStatus.Full);
-    if(maxFree > nameLen+2) return SubchainFreeSpace(addresses, SubchainFreeStatus.Free);
-    return SubchainFreeSpace(addresses, SubchainFreeStatus.RequiresAppend);
+    if(id == -1) return SubchainFreeSpace(addresses, SubchainFreeStatus.Full, id);
+    if(maxFree > nameLen+2) return SubchainFreeSpace(addresses, SubchainFreeStatus.Free, id);
+    return SubchainFreeSpace(addresses, SubchainFreeStatus.RequiresAppend, id);
   }
 }
 
@@ -222,5 +235,6 @@ enum SubchainFreeStatus{
 class SubchainFreeSpace{
   List<String> addresses;
   SubchainFreeStatus status;
-  SubchainFreeSpace(this.addresses, this.status);
+  int id;
+  SubchainFreeSpace(this.addresses, this.status, this.id);
 }
