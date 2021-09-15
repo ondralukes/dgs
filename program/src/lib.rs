@@ -1,4 +1,5 @@
 mod identity;
+mod class;
 
 use crate::identity::create_identity;
 use solana_program::account_info::AccountInfo;
@@ -8,7 +9,8 @@ use solana_program::log::sol_log;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Write};
+use crate::class::create_class;
 
 entrypoint!(main);
 
@@ -16,12 +18,13 @@ entrypoint!(main);
 #[allow(dead_code)]
 enum InstructionType {
     CreateIdentity = 0,
+    CreateClass = 1,
     Invalid = 255,
 }
 
 impl From<u8> for InstructionType {
     fn from(x: u8) -> Self {
-        if x > 0 {
+        if x > 1 {
             return InstructionType::Invalid;
         }
         unsafe { std::mem::transmute(x) }
@@ -32,6 +35,7 @@ impl Display for InstructionType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             InstructionType::CreateIdentity => f.write_str("CreateIdentity"),
+            InstructionType::CreateClass => f.write_str("CreateClass"),
             InstructionType::Invalid => f.write_str("Invalid"),
         }
     }
@@ -40,10 +44,12 @@ fn main(program_id: &Pubkey, accounts: &[AccountInfo], ins_data: &[u8]) -> Progr
     if ins_data.len() == 0 {
         return Err(ProgramError::InvalidInstructionData);
     }
+    sol_log(&format!("First byte: {}", ins_data[0]));
     let ins_type = ins_data[0].into();
     sol_log(&format!("Instruction type: {}", ins_type));
     match ins_type {
         InstructionType::CreateIdentity => create_identity(program_id, accounts, &ins_data[1..]),
+        InstructionType::CreateClass => create_class(program_id, accounts, &ins_data[1..]),
         InstructionType::Invalid => Err(ProgramError::InvalidInstructionData),
     }
 }

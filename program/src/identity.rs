@@ -36,7 +36,7 @@ pub fn create_identity(
     // 1..: UTF-8 encoded name
     ins_data: &[u8],
 ) -> ProgramResult {
-    if ins_data.len() < 1 {
+    if ins_data.len() <= 1 {
         sol_log("Missing instruction arg 0.");
         return Err(ProgramError::InvalidInstructionData);
     }
