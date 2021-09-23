@@ -1,11 +1,13 @@
 import Vue from 'vue'
 import App from './App.vue'
-import {GlobalState} from "@/near";
+import {GlobalState} from "@/globalState";
+import router from './router'
 
 Vue.config.productionTip = false
 
 Vue.prototype.$globalState = new GlobalState();
 
 new Vue({
-  render: h => h(App),
+  router,
+  render: h => h(App)
 }).$mount('#app')
