@@ -1,11 +1,12 @@
 import * as nearAPI from 'near-api-js'
 
-const contractId = 'dev-1632402992487-50293952936550';
+const contractId = 'dev-1632567417420-59015825970923';
 export class GlobalState{
     user = null;
     near = null;
     wallet = null;
     keyStore = null;
+    contract;
     async init(){
         const keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore();
         const config = {
@@ -19,6 +20,23 @@ export class GlobalState{
         this.keyStore = keyStore;
         this.near = await nearAPI.connect(config);
         this.wallet = new nearAPI.WalletConnection(this.near);
+        this.contract = new nearAPI.Contract(
+            this.wallet.isSignedIn()?this.wallet.account():await this.near.account(contractId),
+            contractId,
+            {
+                viewMethods: [
+                    'id_lookup',
+                    'cls_get_name',
+                    'p_get_classes'
+                ],
+                changeMethods: [
+                    'id_create',
+                    'id_add',
+                    'cls_create',
+                    'cls_add_member'
+                ]
+            }
+        );
     }
     nearWalletLogin(){
         this.wallet.requestSignIn({
@@ -43,49 +61,52 @@ export class GlobalState{
         };
         return true;
     }
+    async getClassesId(){
+        if(!this.near) await this.init();
+        return await this.contract.p_get_classes({
+            storage_id: this.user.storageId,
+            id: this.user.id
+        });
+    }
+    async getClassName(classId){
+        if(!this.near) await this.init();
+        return await this.contract.cls_get_name({
+            class_id: classId
+        });
+    }
+    async createClass(storageId, name){
+        if(!this.near) await this.init();
+        return await this.contract.cls_create({
+            storage_id: storageId,
+            name: name
+        });
+    }
+    async addClassMember(classId, memberId){
+        if(!this.near) await this.init();
+        return await this.contract.cls_add_member({
+            class_id: classId,
+            member_id: memberId
+        });
+    }
     get logged(){
         return this.user !== null;
     }
     async identityLookup(storageId, id){
         if(!this.near) await this.init();
-        const contract = new nearAPI.Contract(
-            await this.near.account(contractId),
-            contractId,
-            {
-                viewMethods: ['id_lookup'],
-                changeMethods: []
-            }
-        );
-        return await contract.id_lookup({
+        return await this.contract.id_lookup({
             storage_id: storageId,
             id: id,
         });
     }
     async identityAdd(storageId, name){
         if(!this.near) await this.init();
-        const contract = new nearAPI.Contract(
-            this.wallet.account(),
-            contractId,
-            {
-                viewMethods: [],
-                changeMethods: ['id_add']
-            }
-        );
-        return await contract.id_add({
+        return await this.contract.id_add({
             storage_id: storageId,
             name: name,
         });
     }
     async identityCreate(){
         if(!this.near) await this.init();
-        const contract = new nearAPI.Contract(
-            this.wallet.account(),
-            contractId,
-            {
-                viewMethods: [],
-                changeMethods: ['id_create']
-            }
-        );
-        return await contract.id_create();
+        return await this.contract.id_create();
     }
 }

@@ -104,6 +104,13 @@ impl State {
         }
     }
 
+    pub fn cls_get_name(&self, class_id: u128) -> String{
+        match self.classes.get(&class_id){
+            None => panic!("No such Class!"),
+            Some(cls) => cls.name().clone()
+        }
+    }
+
     pub fn p_get_classes(&self, storage_id: u128, id: u32) -> Vec<u128>{
         match self.storages.get(&storage_id){
             None => panic!("No such IdentityStorage!"),
