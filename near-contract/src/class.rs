@@ -17,6 +17,7 @@ impl Class{
     pub fn storage_id(&self) -> &u128 { &self.storage_id }
     pub fn owner(&self) -> &AccountId { &self.owner }
     pub fn name(&self) -> &String { &self.name }
+    pub fn members(&self) -> &UnorderedSet<u32> { &self.members }
 
     pub fn new(name: &String, storage_id: u128, owner: AccountId, class_id: u128) -> Self{
         let mut mkey = b"clsm".to_vec(); mkey.extend_from_slice(&class_id.to_le_bytes());

@@ -1,6 +1,6 @@
 import * as nearAPI from 'near-api-js'
 
-const contractId = 'dev-1632567417420-59015825970923';
+const contractId = 'dev-1633119747446-24587282171571';
 export class GlobalState{
     user = null;
     near = null;
@@ -27,13 +27,16 @@ export class GlobalState{
                 viewMethods: [
                     'id_lookup',
                     'cls_get_name',
+                    'cls_get_members',
+                    'cls_get_grades',
                     'p_get_classes'
                 ],
                 changeMethods: [
                     'id_create',
                     'id_add',
                     'cls_create',
-                    'cls_add_member'
+                    'cls_add_member',
+                    'cls_add_grade'
                 ]
             }
         );
@@ -86,6 +89,27 @@ export class GlobalState{
         return await this.contract.cls_add_member({
             class_id: classId,
             member_id: memberId
+        });
+    }
+    async getClassMembers(classId){
+        if(!this.near) await this.init();
+        return await this.contract.cls_get_members({
+            class_id: classId
+        });
+    }
+    async getClassGrades(classId){
+        if(!this.near) await this.init();
+        return await this.contract.cls_get_grades({
+            class_id: classId,
+            member_id: this.user.id
+        });
+    }
+    async addGrade(classId, name, values){
+        if(!this.near) await this.init();
+        return await this.contract.cls_add_grade({
+            class_id: classId,
+            name: name,
+            values: values
         });
     }
     get logged(){

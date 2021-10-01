@@ -11,7 +11,7 @@
       <input type="submit" value="Add">
     </form>
     <button type="button" @click="create">Create new IdentityStorage</button>
-    <h3>Class management</h3>
+    <h3>Create a class</h3>
     <form @submit="createClass">
       <input ref="classStorageId" type="number" placeholder="IdentityStorage ID">
       <br>
@@ -19,12 +19,10 @@
       <br>
       <input type="submit" value="Create">
     </form>
-    <form @submit="addClassMember">
+    <h3>Class admin</h3>
+    <form @submit="classAdmin">
       <input ref="classId" type="number" placeholder="Class ID">
-      <br>
-      <input ref="memberId" type="number" placeholder="Person ID">
-      <br>
-      <input type="submit" value="Add">
+      <input type="submit" value="Go!">
     </form>
     <br>
     <button type="button" @click="logout">Disconnect NEAR Wallet</button>
@@ -73,12 +71,16 @@ export default {
       const id = await this.$globalState.createClass(storageId, name);
       alert(`Class created with id ${id}`);
     },
-    async addClassMember(e){
+    async classAdmin(e){
       e.preventDefault();
-      const classId = parseInt(this.$refs.classId.value);
-      const memberId = parseInt(this.$refs.memberId.value);
-      await this.$globalState.addClassMember(classId, memberId);
-      alert(`Added succesfully.`);
+      await this.$router.push(
+          {
+            name: 'ClassAdmin',
+            params: {
+              id: this.$refs.classId.value
+            }
+          }
+      );
     },
   }
 }

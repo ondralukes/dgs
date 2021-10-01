@@ -100,6 +100,7 @@ impl State {
                     }
                 }
                 cls.add_member(&member_id);
+                self.classes.insert(&class_id, &cls);
             }
         }
     }
@@ -108,6 +109,29 @@ impl State {
         match self.classes.get(&class_id){
             None => panic!("No such Class!"),
             Some(cls) => cls.name().clone()
+        }
+    }
+
+    pub fn cls_get_members(&self, class_id: u128) -> Vec<(u32, String)>{
+        match self.classes.get(&class_id){
+            None => panic!("No such Class!"),
+            Some(cls) => {
+                match self.storages.get(cls.storage_id()){
+                    None => panic!("Class references non-existent IdentityStorage!"),
+                    Some(storage) => {
+                        let mut v = vec![];
+                        for id in cls.members().iter(){
+                            match storage.lookup(&id){
+                                None => panic!("Memeber not found in IdentityStorage!"),
+                                Some(name) => {
+                                    v.push((id, name.name().clone()));
+                                }
+                            }
+                        }
+                        v
+                    }
+                }
+            }
         }
     }
 
