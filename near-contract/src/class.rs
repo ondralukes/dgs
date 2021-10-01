@@ -1,6 +1,7 @@
 use near_sdk::AccountId;
-use near_sdk::collections::UnorderedSet;
+use near_sdk::collections::{UnorderedSet, Vector};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use crate::grade::Grade;
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Class{
@@ -8,7 +9,7 @@ pub struct Class{
     storage_id: u128,
     owner: AccountId,
     members: UnorderedSet<u32>,
-    // grades: Vector<Grade>
+    grades: Vector<Grade>
 }
 
 impl Class{
@@ -19,17 +20,33 @@ impl Class{
 
     pub fn new(name: &String, storage_id: u128, owner: AccountId, class_id: u128) -> Self{
         let mut mkey = b"clsm".to_vec(); mkey.extend_from_slice(&class_id.to_le_bytes());
-        // let mut gkey = b"clsg".to_vec(); gkey.extend_from_slice(&class_id.to_le_bytes());
+        let mut gkey = b"clsg".to_vec(); gkey.extend_from_slice(&class_id.to_le_bytes());
         Self {
             name: name.clone(),
             storage_id,
             owner,
             members: UnorderedSet::new(mkey),
-            // grades: Vector::new(gkey)
+            grades: Vector::new(gkey)
         }
     }
 
     pub fn add_member(&mut self, member_id: &u32){
         self.members.insert(member_id);
+    }
+
+    pub fn add_grade(&mut self, name: &String, class_id: u128, values: &[(u32, u8)]){
+        let g = Grade::new(name, class_id, self.grades.len() as u32, values);
+        self.grades.push(&g);
+    }
+
+    pub fn get_grades(&self, member_id: &u32) -> Vec<(String, Option<u8>)>{
+        let mut v = vec![];
+        for g in self.grades.iter(){
+            v.push((g.name().clone(), g.get_value(member_id)));
+        }
+        v
+    }
+    pub fn contains_member(&self, member_id: &u32) -> bool{
+        self.members.contains(&member_id)
     }
 }

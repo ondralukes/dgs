@@ -4,11 +4,11 @@ use near_sdk::collections::LookupMap;
 
 use class::Class;
 use identity_storage::IdentityStorage;
-use crate::person::Person;
 
 mod identity_storage;
 mod person;
 mod class;
+mod grade;
 
 near_sdk::setup_alloc!();
 
@@ -111,6 +111,32 @@ impl State {
         }
     }
 
+    pub fn cls_add_grade(&mut self, class_id: u128, name: String, values: Vec<(u32, u8)>){
+        match self.classes.get(&class_id){
+            None => panic!("No such Class!"),
+            Some(mut cls) => {
+                if cls.owner() != &env::signer_account_id() {
+                    panic!("Only class owner can add grades!");
+                }
+                for (m, _) in &values {
+                    if !cls.contains_member(&m){
+                        panic!("Referenced person is not a member.");
+                    }
+                }
+                cls.add_grade(&name, class_id, &values);
+                self.classes.insert(&class_id, &cls);
+            }
+        }
+    }
+
+    pub fn cls_get_grades(&self, class_id: u128, member_id: u32) -> Vec<(String, Option<u8>)>{
+        match self.classes.get(&class_id){
+            None => panic!("No such Class!"),
+            Some(cls) => {
+                cls.get_grades(&member_id)
+            }
+        }
+    }
     pub fn p_get_classes(&self, storage_id: u128, id: u32) -> Vec<u128>{
         match self.storages.get(&storage_id){
             None => panic!("No such IdentityStorage!"),
