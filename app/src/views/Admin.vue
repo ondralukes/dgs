@@ -1,5 +1,6 @@
 <template>
 <div>
+  <TransactionOverlay v-if="txn!==null" :txn="txn" @done="txn=null;"/>
   <h2 v-if="logged===null">Checking login status...</h2>
   <div v-else-if="logged">
     <h3>IdentityStorage management</h3>
@@ -34,11 +35,14 @@
 </template>
 
 <script>
+import TransactionOverlay from "@/components/TransactionOverlay";
 export default {
   name: "Admin",
+  components: {TransactionOverlay},
   data(){
     return {
-      logged: null
+      logged: null,
+      txn: null
     }
   },
   async created() {
@@ -53,23 +57,20 @@ export default {
       await this.$globalState.nearWalletLogout();
       this.logged = false;
     },
-    async add(e){
+    add(e){
       e.preventDefault();
       const storageId = parseInt(this.$refs.addStorageId.value);
       const name = this.$refs.addName.value;
-      const id = await this.$globalState.identityAdd(storageId, name);
-      alert(`Person added with id ${id}`);
+      this.txn = this.$globalState.identityAdd(storageId, name);
     },
-    async create(){
-      const id = await this.$globalState.identityCreate();
-      alert(`IdentityStorage created with id ${id}`);
+    create(){
+      this.txn = this.$globalState.identityCreate();
     },
-    async createClass(e){
+    createClass(e){
       e.preventDefault();
       const storageId = parseInt(this.$refs.classStorageId.value);
       const name = this.$refs.className.value;
-      const id = await this.$globalState.createClass(storageId, name);
-      alert(`Class created with id ${id}`);
+      this.txn = this.$globalState.createClass(storageId, name);
     },
     async classAdmin(e){
       e.preventDefault();

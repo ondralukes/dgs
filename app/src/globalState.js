@@ -77,16 +77,14 @@ export class GlobalState{
             class_id: classId
         });
     }
-    async createClass(storageId, name){
-        if(!this.near) await this.init();
-        return await this.contract.cls_create({
+    createClass(storageId, name){
+        return this.createTrackableTransaction('cls_create', {
             storage_id: storageId,
             name: name
         });
     }
-    async addClassMember(classId, memberId){
-        if(!this.near) await this.init();
-        return await this.contract.cls_add_member({
+    addClassMember(classId, memberId){
+        return this.createTrackableTransaction('cls_add_member', {
             class_id: classId,
             member_id: memberId
         });
@@ -104,9 +102,8 @@ export class GlobalState{
             member_id: this.user.id
         });
     }
-    async addGrade(classId, name, values){
-        if(!this.near) await this.init();
-        return await this.contract.cls_add_grade({
+    addGrade(classId, name, values){
+        return this.createTrackableTransaction('cls_add_grade', {
             class_id: classId,
             name: name,
             values: values
@@ -122,15 +119,24 @@ export class GlobalState{
             id: id,
         });
     }
-    async identityAdd(storageId, name){
-        if(!this.near) await this.init();
-        return await this.contract.id_add({
+    identityAdd(storageId, name){
+        return this.createTrackableTransaction('id_add', {
             storage_id: storageId,
-            name: name,
+            name: name
         });
     }
-    async identityCreate(){
-        if(!this.near) await this.init();
-        return await this.contract.id_create();
+    identityCreate(){
+        return this.createTrackableTransaction('id_create', {});
+    }
+    createTrackableTransaction(method, params){
+        return {
+            contract: contractId,
+            method: method,
+            params: params,
+            promise:
+                this.near
+                    ?this.contract[method](params)
+                    :this.init().then(() => this.contract[method](params))
+        }
     }
 }

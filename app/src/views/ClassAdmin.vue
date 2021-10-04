@@ -1,5 +1,6 @@
 <template>
   <div>
+    <TransactionOverlay v-if="txn!==null" :txn="txn" @done="onDone"/>
     <h1>{{name}}</h1>
     <h2>Add member</h2>
     <form @submit="addMember">
@@ -25,13 +26,17 @@
 </template>
 
 <script>
+import TransactionOverlay from "@/components/TransactionOverlay";
+
 export default {
   name: "ClassAdmin",
+  components: {TransactionOverlay},
   data(){
     return{
       name: '',
       id: null,
-      members: []
+      members: [],
+      txn: null
     }
   },
   async created() {
@@ -40,14 +45,16 @@ export default {
     this.name = await this.$globalState.getClassName(this.id);
   },
   methods: {
-    async addMember(e){
-      e.preventDefault();
-      const memberId = parseInt(this.$refs.memberId.value);
-      await this.$globalState.addClassMember(this.id, memberId);
-      alert(`Added successfully.`);
+    onDone(){
+      this.txn = null;
       this.updateMembers();
     },
-    async addGrade(e){
+    addMember(e){
+      e.preventDefault();
+      const memberId = parseInt(this.$refs.memberId.value);
+      this.txn = this.$globalState.addClassMember(this.id, memberId);
+    },
+    addGrade(e){
       e.preventDefault();
       const values = [];
       for(const [id, ] of this.members){
@@ -56,8 +63,7 @@ export default {
           parseInt(this.$refs[`grade-${id}`][0].value)
         ]);
       }
-      await this.$globalState.addGrade(this.id, this.$refs.gradeName.value, values);
-      alert(`Added successfully.`);
+      this.txn = this.$globalState.addGrade(this.id, this.$refs.gradeName.value, values);
     },
     async updateMembers(){
       this.members = await this.$globalState.getClassMembers(this.id);
