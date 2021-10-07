@@ -153,7 +153,7 @@ impl State {
         }
     }
 
-    pub fn cls_get_grades(&self, class_id: u128, member_id: u32) -> Vec<(String, Option<u8>)>{
+    pub fn cls_get_grades(&self, class_id: u128, member_id: u32) -> Vec<(String, u64, Option<u8>)>{
         match self.classes.get(&class_id){
             None => panic!("No such Class!"),
             Some(cls) => {

@@ -40,10 +40,10 @@ impl Class{
         self.grades.push(&g);
     }
 
-    pub fn get_grades(&self, member_id: &u32) -> Vec<(String, Option<u8>)>{
+    pub fn get_grades(&self, member_id: &u32) -> Vec<(String, u64, Option<u8>)>{
         let mut v = vec![];
         for g in self.grades.iter(){
-            v.push((g.name().clone(), g.get_value(member_id)));
+            v.push((g.name().clone(), *g.timestamp(), g.get_value(member_id)));
         }
         v
     }

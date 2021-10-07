@@ -2,17 +2,27 @@
   <div>
     <h1>{{$globalState.user.name}}</h1>
     <h2>Classes</h2>
-    <ul v-if="classes !== null">
-      <li v-for="c in classes" :key="c.id">
-        #{{c.id}}: {{c.name}}
-        <table>
-          <tr v-for="(g, index) in c.grades" :key="index">
-            <td>{{g[0]}}</td>
-            <td>{{g[1]}}</td>
-          </tr>
-        </table>
-      </li>
-    </ul>
+    <div class="classes" v-if="classes !== null">
+      <table v-for="c in classes" :key="c.id">
+        <tr>
+          <td colspan="3">
+            <h3>{{c.name}}</h3>
+          </td>
+        </tr>
+        <tr v-for="(g, index) in c.grades" :key="index">
+          <td>{{g.timestamp.toLocaleString()}}</td>
+          <td>{{g.name}}</td>
+          <td>{{g.value}}</td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <b>
+              {{c.grades.length}} grades total. Average: {{c.average.toFixed(3)}}
+            </b>
+          </td>
+        </tr>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -38,7 +48,16 @@ export default {
       }));
       promises.push(new Promise(resolve => {
         this.$globalState.getClassGrades(c.id).then(grades => {
-          c.grades = grades;
+          c.grades = grades.map(
+              raw => {
+                return {
+                  name: raw[0],
+                  timestamp: new Date(raw[1]),
+                  value: raw[2]
+                }
+              }
+          );
+          c.average = c.grades.reduce((sum, x) => sum+x.value, 0) / c.grades.length;
           resolve();
         })
       }));
@@ -51,6 +70,19 @@ export default {
 
 <style scoped>
 table{
+  margin: auto auto 10pt;
+  width: 100%;
+  border-collapse: collapse;
+}
+table, td{
+  border: 2px solid;
+}
+td{
+  width: 33%;
+}
+.classes{
   margin: auto;
+  width: 100%;
+  max-width: 700px;
 }
 </style>

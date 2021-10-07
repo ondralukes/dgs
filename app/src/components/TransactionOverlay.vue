@@ -47,7 +47,7 @@ export default {
       this.error = e;
     });
     this.txn.promise.then(r => {
-      if(!r){
+      if(r === ''){
         this.$emit('done')
       } else {
         this.result = r;

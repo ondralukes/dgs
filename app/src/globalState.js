@@ -1,6 +1,6 @@
 import * as nearAPI from 'near-api-js'
 
-const contractId = 'dev-1633119747446-24587282171571';
+const contractId = 'dev-1633632989655-21862239931933';
 export class GlobalState{
     user = null;
     near = null;
