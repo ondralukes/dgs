@@ -42,7 +42,6 @@ export default {
     }
   },
   created() {
-    console.log('Created ', this.txn);
     this.txn.promise.catch(e => {
       this.error = e;
     });

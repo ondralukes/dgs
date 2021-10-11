@@ -7,6 +7,7 @@ use crate::grade::Grade;
 pub struct Class{
     name: String,
     storage_id: u128,
+    finalized: bool,
     owner: AccountId,
     members: UnorderedSet<u32>,
     grades: Vector<Grade>
@@ -18,6 +19,9 @@ impl Class{
     pub fn owner(&self) -> &AccountId { &self.owner }
     pub fn name(&self) -> &String { &self.name }
     pub fn members(&self) -> &UnorderedSet<u32> { &self.members }
+    pub fn member_count(&self) -> u64 { self.members.len() }
+    pub fn grade_count(&self) -> u64 { self.grades.len() }
+    pub fn finalized(&self) -> bool { self.finalized }
 
     pub fn new(name: &String, storage_id: u128, owner: AccountId, class_id: u128) -> Self{
         let mut mkey = b"clsm".to_vec(); mkey.extend_from_slice(&class_id.to_le_bytes());
@@ -26,6 +30,7 @@ impl Class{
             name: name.clone(),
             storage_id,
             owner,
+            finalized: false,
             members: UnorderedSet::new(mkey),
             grades: Vector::new(gkey)
         }
@@ -33,6 +38,10 @@ impl Class{
 
     pub fn add_member(&mut self, member_id: &u32){
         self.members.insert(member_id);
+    }
+
+    pub fn finalize(&mut self){
+        self.finalized = true;
     }
 
     pub fn add_grade(&mut self, name: &String, class_id: u128, values: &[(u32, u8)]){

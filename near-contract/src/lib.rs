@@ -87,6 +87,9 @@ impl State {
                 if cls.owner() != &env::signer_account_id() {
                     panic!("Only class owner can add members!");
                 }
+                if cls.finalized(){
+                    panic!("Cannot modify finalized class!");
+                }
                 match self.storages.get(cls.storage_id()){
                     None => panic!("Class references non-existent IdentityStorage!"),
                     Some(mut storage) => {
@@ -105,10 +108,12 @@ impl State {
         }
     }
 
-    pub fn cls_get_name(&self, class_id: u128) -> String{
+    pub fn cls_get_info(&self, class_id: u128) -> (String, bool, u64, u64){
         match self.classes.get(&class_id){
             None => panic!("No such Class!"),
-            Some(cls) => cls.name().clone()
+            Some(cls) => (
+                cls.name().clone(), cls.finalized(), cls.member_count(), cls.grade_count()
+            )
         }
     }
 
@@ -142,6 +147,9 @@ impl State {
                 if cls.owner() != &env::signer_account_id() {
                     panic!("Only class owner can add grades!");
                 }
+                if cls.finalized(){
+                    panic!("Cannot modify finalized class!");
+                }
                 for (m, _) in &values {
                     if !cls.contains_member(&m){
                         panic!("Referenced person is not a member.");
@@ -161,6 +169,20 @@ impl State {
             }
         }
     }
+
+    pub fn cls_finalize(&mut self, class_id: u128) {
+        match self.classes.get(&class_id){
+            None => panic!("No such Class!"),
+            Some(mut cls) => {
+                if cls.owner() != &env::signer_account_id() {
+                    panic!("Only owner can finalize class!");
+                }
+                cls.finalize();
+                self.classes.insert(&class_id, &cls);
+            }
+        }
+    }
+
     pub fn p_get_classes(&self, storage_id: u128, id: u32) -> Vec<u128>{
         match self.storages.get(&storage_id){
             None => panic!("No such IdentityStorage!"),

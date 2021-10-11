@@ -7,6 +7,7 @@
         <tr>
           <td colspan="3">
             <h3>{{c.name}}</h3>
+            <span v-if="c.finalized">(finalized)</span>
           </td>
         </tr>
         <tr v-for="(g, index) in c.grades" :key="index">
@@ -41,8 +42,9 @@ export default {
     const promises = [];
     classes.forEach(c => {
       promises.push(new Promise(resolve => {
-            this.$globalState.getClassName(c.id).then(name => {
-              c.name = name;
+            this.$globalState.getClassInfo(c.id).then(info => {
+              c.name = info.name;
+              c.finalized = info.finalized;
               resolve();
             })
       }));

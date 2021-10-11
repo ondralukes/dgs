@@ -1,6 +1,6 @@
 import * as nearAPI from 'near-api-js'
 
-const contractId = 'dev-1633632989655-21862239931933';
+const contractId = 'dev-1633940009656-67273686024371';
 export class GlobalState{
     user = null;
     near = null;
@@ -26,7 +26,7 @@ export class GlobalState{
             {
                 viewMethods: [
                     'id_lookup',
-                    'cls_get_name',
+                    'cls_get_info',
                     'cls_get_members',
                     'cls_get_grades',
                     'p_get_classes'
@@ -36,7 +36,8 @@ export class GlobalState{
                     'id_add',
                     'cls_create',
                     'cls_add_member',
-                    'cls_add_grade'
+                    'cls_add_grade',
+                    'cls_finalize'
                 ]
             }
         );
@@ -71,11 +72,17 @@ export class GlobalState{
             id: this.user.id
         });
     }
-    async getClassName(classId){
+    async getClassInfo(classId){
         if(!this.near) await this.init();
-        return await this.contract.cls_get_name({
+        const raw = await this.contract.cls_get_info({
             class_id: classId
         });
+        return {
+            name: raw[0],
+            finalized: raw[1],
+            memberCount: raw[2],
+            gradeCount: raw[3]
+        };
     }
     createClass(storageId, name){
         return this.createTrackableTransaction('cls_create', {
@@ -107,6 +114,11 @@ export class GlobalState{
             class_id: classId,
             name: name,
             values: values
+        });
+    }
+    finalizeClass(classId){
+        return this.createTrackableTransaction('cls_finalize', {
+            class_id: classId
         });
     }
     get logged(){

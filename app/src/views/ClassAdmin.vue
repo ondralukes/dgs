@@ -2,6 +2,7 @@
   <div>
     <TransactionOverlay v-if="txn!==null" :txn="txn" @done="onDone"/>
     <h1>{{name}}</h1>
+    <div v-if="finalized">finalized</div>
     <h2>Add member</h2>
     <form @submit="addMember">
       <input ref="memberId" type="number" placeholder="Person ID">
@@ -22,6 +23,7 @@
       <br>
       <input type="submit" value="Add">
     </form>
+    <button @click="finalize" type="button">Finalize</button>
   </div>
 </template>
 
@@ -34,6 +36,7 @@ export default {
   data(){
     return{
       name: '',
+      finalized: false,
       id: null,
       members: [],
       txn: null
@@ -42,7 +45,9 @@ export default {
   async created() {
     this.id = parseInt(this.$route.params.id);
     this.updateMembers();
-    this.name = await this.$globalState.getClassName(this.id);
+    const info = await this.$globalState.getClassInfo(this.id);
+    this.name = info.name;
+    this.finalized = info.finalized;
   },
   methods: {
     onDone(){
@@ -64,6 +69,9 @@ export default {
         ]);
       }
       this.txn = this.$globalState.addGrade(this.id, this.$refs.gradeName.value, values);
+    },
+    finalize(){
+      this.txn = this.$globalState.finalizeClass(this.id);
     },
     async updateMembers(){
       this.members = await this.$globalState.getClassMembers(this.id);

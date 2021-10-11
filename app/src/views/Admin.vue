@@ -22,8 +22,9 @@
     </form>
     <h3>Class admin</h3>
     <form @submit="classAdmin">
-      <input ref="classId" type="number" placeholder="Class ID">
+      <input @input="classNotFound=false" ref="classId" type="number" placeholder="Class ID">
       <input type="submit" value="Go!">
+      <div v-if="classNotFound">Not found.</div>
     </form>
     <br>
     <button type="button" @click="logout">Disconnect NEAR Wallet</button>
@@ -42,7 +43,8 @@ export default {
   data(){
     return {
       logged: null,
-      txn: null
+      txn: null,
+      classNotFound: false
     }
   },
   async created() {
@@ -74,12 +76,18 @@ export default {
     },
     async classAdmin(e){
       e.preventDefault();
-      await this.$router.push(
-          {
-            name: 'ClassAdmin',
-            params: {
-              id: this.$refs.classId.value
-            }
+      const id = this.$refs.classId.value;
+      this.$globalState.getClassInfo(parseInt(id)).then(
+          () => this.$router.push(
+              {
+                name: 'ClassAdmin',
+                params: {
+                  id
+                }
+              }
+          ),
+          () => {
+            this.classNotFound = true
           }
       );
     },
