@@ -4,8 +4,8 @@
     <h1>{{name}}</h1>
     <div v-if="finalized">finalized</div>
     <h2>Add member</h2>
-    <form @submit="addMember">
-      <input ref="memberId" type="number" placeholder="Person ID">
+    <form class="member-form" @submit="addMember">
+      <PersonSelector @select="selectedMemberId=$event" :storage-id="storageId"/>
       <br>
       <input type="submit" value="Add">
     </form>
@@ -29,17 +29,20 @@
 
 <script>
 import TransactionOverlay from "@/components/TransactionOverlay";
+import PersonSelector from "@/components/PersonSelector";
 
 export default {
   name: "ClassAdmin",
-  components: {TransactionOverlay},
+  components: {PersonSelector, TransactionOverlay},
   data(){
     return{
       name: '',
       finalized: false,
       id: null,
+      storageId: null,
       members: [],
-      txn: null
+      txn: null,
+      selectedMemberId: null
     }
   },
   async created() {
@@ -48,6 +51,7 @@ export default {
     const info = await this.$globalState.getClassInfo(this.id);
     this.name = info.name;
     this.finalized = info.finalized;
+    this.storageId = info.storageId;
   },
   methods: {
     onDone(){
@@ -56,8 +60,8 @@ export default {
     },
     addMember(e){
       e.preventDefault();
-      const memberId = parseInt(this.$refs.memberId.value);
-      this.txn = this.$globalState.addClassMember(this.id, memberId);
+      if(this.selectedMemberId === null) return;
+      this.txn = this.$globalState.addClassMember(this.id, this.selectedMemberId);
     },
     addGrade(e){
       e.preventDefault();
@@ -81,5 +85,11 @@ export default {
 </script>
 
 <style scoped>
-
+.member-form{
+  width: 250px;
+  margin: auto;
+}
+.member-form > *{
+  width: 100%;
+}
 </style>

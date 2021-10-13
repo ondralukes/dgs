@@ -108,11 +108,11 @@ impl State {
         }
     }
 
-    pub fn cls_get_info(&self, class_id: u128) -> (String, bool, u64, u64){
+    pub fn cls_get_info(&self, class_id: u128) -> (String, u128, bool, u64, u64){
         match self.classes.get(&class_id){
             None => panic!("No such Class!"),
             Some(cls) => (
-                cls.name().clone(), cls.finalized(), cls.member_count(), cls.grade_count()
+                cls.name().clone(), *cls.storage_id(), cls.finalized(), cls.member_count(), cls.grade_count()
             )
         }
     }

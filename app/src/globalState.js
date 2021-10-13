@@ -56,14 +56,20 @@ export class GlobalState{
     }
 
     async login(storageId, id){
-        const name = await this.identityLookup(storageId, id);
-        if(name == null) return false;
-        this.user = {
-            storageId: storageId,
-            id: id,
-            name: name
-        };
-        return true;
+        return new Promise((resolve) => {
+            this.identityLookup(storageId, id).then(
+                name => {
+                    if(name == null) resolve(false);
+                    this.user = {
+                        storageId: storageId,
+                        id: id,
+                        name: name
+                    };
+                    resolve(true);
+                },
+                () => resolve(false)
+            )
+        });
     }
     async getClassesId(){
         if(!this.near) await this.init();
@@ -79,9 +85,10 @@ export class GlobalState{
         });
         return {
             name: raw[0],
-            finalized: raw[1],
-            memberCount: raw[2],
-            gradeCount: raw[3]
+            storageId: raw[1],
+            finalized: raw[2],
+            memberCount: raw[3],
+            gradeCount: raw[4]
         };
     }
     createClass(storageId, name){
